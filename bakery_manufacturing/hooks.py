@@ -7,7 +7,9 @@ app_license = "mit"
 
 # Apps
 # ------------------
-
+override_doctype_class = {
+    "Serial and Batch Bundle": "bakery_manufacturing.overrides.serial_batch_bundle.BakerySerialAndBatchBundle"
+}
 # required_apps = []
 
 # Each item in the list will be shown as an app in the apps page
