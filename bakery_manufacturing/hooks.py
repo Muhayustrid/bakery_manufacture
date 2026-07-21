@@ -10,6 +10,15 @@ app_license = "mit"
 override_doctype_class = {
     "Serial and Batch Bundle": "bakery_manufacturing.overrides.serial_batch_bundle.BakerySerialAndBatchBundle"
 }
+
+override_whitelisted_methods = {
+    "erpnext.stock.utils.scan_barcode": "bakery_manufacturing.overrides.barcode_scanner.custom_scan_barcode"
+}
+
+fixtures = [
+    {"dt": "Custom Field", "filters": [["fieldname", "=", "custom_default_uom_warehouse"]]}
+]
+
 # required_apps = []
 
 # Each item in the list will be shown as an app in the apps page
