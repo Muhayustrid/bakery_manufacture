@@ -12,11 +12,12 @@ override_doctype_class = {
 }
 
 override_whitelisted_methods = {
-    "erpnext.stock.utils.scan_barcode": "bakery_manufacturing.overrides.barcode_scanner.custom_scan_barcode"
+    "erpnext.stock.utils.scan_barcode": "bakery_manufacturing.overrides.barcode_scanner.custom_scan_barcode",
+    "erpnext.selling.page.point_of_sale.point_of_sale.get_past_order_list": "bakery_manufacturing.overrides.pos_overrides.custom_get_past_order_list",
 }
 
 fixtures = [
-    {"dt": "Custom Field", "filters": [["fieldname", "=", "custom_default_uom_warehouse"]]}
+    {"dt": "Custom Field", "filters": [["fieldname", "in", ["custom_default_uom_warehouse", "custom_walk_in_customer_name"]]]},
 ]
 
 # required_apps = []
@@ -37,7 +38,7 @@ fixtures = [
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/bakery_manufacturing/css/bakery_manufacturing.css"
-# app_include_js = "/assets/bakery_manufacturing/js/bakery_manufacturing.js"
+app_include_js = "bakery_manufacturing.bundle.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/bakery_manufacturing/css/bakery_manufacturing.css"
