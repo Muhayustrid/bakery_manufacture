@@ -25,9 +25,11 @@ class TestPriceGroup(FrappeTestCase):
 
     def test_save_creates_price_list_and_item_prices(self):
         """Save Price Group → Price List created; Item Price rates match child."""
+        item1 = self._ensure_item("_PG Test Item 1").name
+        item2 = self._ensure_item("_PG Test Item 2").name
         pg = self._make_price_group(items=[
-            {"item_code": self._ensure_item("_PG Test Item 1").name, "rate": 15000},
-            {"item_code": self._ensure_item("_PG Test Item 2").name, "rate": 12000},
+            {"item_code": item1, "rate": 15000},
+            {"item_code": item2, "rate": 12000},
         ])
         pg.insert(ignore_permissions=True)
 
@@ -39,20 +41,21 @@ class TestPriceGroup(FrappeTestCase):
 
         # Item Prices match
         ip1 = frappe.db.get_value("Item Price",
-            {"item_code": "_PG Test Item 1", "price_list": "PG-Test Group A"},
+            {"item_code": item1, "price_list": "PG-Test Group A"},
             ["price_list_rate", "uom"], as_dict=True)
         self.assertIsNotNone(ip1)
         self.assertEqual(ip1.price_list_rate, 15000)
 
         ip2 = frappe.db.get_value("Item Price",
-            {"item_code": "_PG Test Item 2", "price_list": "PG-Test Group A"},
+            {"item_code": item2, "price_list": "PG-Test Group A"},
             "price_list_rate")
         self.assertEqual(ip2, 12000)
 
     def test_update_rate_syncs_item_price(self):
         """Change rate → Item Price updated."""
+        item1 = self._ensure_item("_PG Test Item 1").name
         pg = self._make_price_group(items=[
-            {"item_code": self._ensure_item("_PG Test Item 1").name, "rate": 15000},
+            {"item_code": item1, "rate": 15000},
         ])
         pg.insert(ignore_permissions=True)
 
@@ -61,7 +64,7 @@ class TestPriceGroup(FrappeTestCase):
         pg.save()
 
         ip_rate = frappe.db.get_value("Item Price",
-            {"item_code": "_PG Test Item 1", "price_list": "PG-Test Group A"},
+            {"item_code": item1, "price_list": "PG-Test Group A"},
             "price_list_rate")
         self.assertEqual(ip_rate, 18000)
 
