@@ -151,7 +151,63 @@ class PriceGroup(Document):
             ip.insert(ignore_permissions=True)
 
     def _sync_pos_profiles(self):
-        pass
+        if not self.price_list:
+            return
+
+        warnings = []
+        for row in self.outlets:
+            profiles = frappe.get_all(
+                "POS Profile",
+                filters={"company": row.company, "warehouse": row.warehouse},
+                pluck="name",
+            )
+
+            if not profiles:
+                row.status = "No POS Profile"
+                row.pos_profile = None
+                # Persist directly to avoid re-triggering on_update (infinite recursion)
+                if row.name:
+                    frappe.db.set_value(
+                        "Price Group Outlet", row.name,
+                        {"status": "No POS Profile", "pos_profile": None},
+                        update_modified=False,
+                    )
+                warnings.append(
+                    _("No POS Profile found for {0} / {1}").format(
+                        row.company, row.warehouse
+                    )
+                )
+                continue
+
+            # Update all matching POS Profiles
+            for pp_name in profiles:
+                pp = frappe.get_doc("POS Profile", pp_name)
+                if pp.selling_price_list != self.price_list:
+                    pp.selling_price_list = self.price_list
+                    pp.save(ignore_permissions=True)
+
+            row.pos_profile = profiles[0]
+            row.status = "Linked"
+            # Persist directly to avoid re-triggering on_update (infinite recursion)
+            if row.name:
+                frappe.db.set_value(
+                    "Price Group Outlet", row.name,
+                    {"status": "Linked", "pos_profile": profiles[0]},
+                    update_modified=False,
+                )
+
+            if len(profiles) > 1:
+                frappe.msgprint(
+                    _("{0} POS Profiles updated for {1} / {2}").format(
+                        len(profiles), row.company, row.warehouse
+                    ),
+                    indicator="blue",
+                    alert=True,
+                )
+
+        if warnings:
+            for w in warnings:
+                frappe.msgprint(w, indicator="orange", title=_("POS Profile Warning"))
 
     def _cleanup(self):
         if not self.price_list:
