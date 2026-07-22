@@ -63,13 +63,113 @@ class PriceGroup(Document):
                 )
 
     def _sync_price_list(self):
-        pass
+        pl_name = f"PG-{self.price_group_name}"
+
+        if self.price_list and frappe.db.exists("Price List", self.price_list):
+            # Update existing
+            pl = frappe.get_doc("Price List", self.price_list)
+            changed = False
+            if pl.enabled != self.enabled:
+                pl.enabled = self.enabled
+                changed = True
+            if pl.currency != self.currency:
+                pl.currency = self.currency
+                changed = True
+            if changed:
+                pl.save(ignore_permissions=True)
+        else:
+            # Check collision: PL with this name exists but belongs to something else
+            if frappe.db.exists("Price List", pl_name):
+                frappe.throw(
+                    _("Price List {0} already exists and is not linked to this Price Group").format(
+                        pl_name
+                    )
+                )
+
+            # Create
+            pl = frappe.get_doc({
+                "doctype": "Price List",
+                "price_list_name": pl_name,
+                "selling": 1,
+                "buying": 0,
+                "currency": self.currency,
+                "enabled": self.enabled,
+            })
+            pl.insert(ignore_permissions=True)
+
+            self.db_set("price_list", pl.name, update_modified=False)
+            self.price_list = pl.name
 
     def _sync_item_prices(self):
-        pass
+        if not self.price_list:
+            return
+
+        target_items = set()
+        for row in self.items:
+            target_items.add(row.item_code)
+            self._upsert_item_price(row.item_code, row.uom, row.rate)
+
+        # Delete orphaned Item Prices (item removed from child)
+        existing = frappe.get_all(
+            "Item Price",
+            filters={
+                "price_list": self.price_list,
+                "customer": ("is", "not set"),
+                "supplier": ("is", "not set"),
+            },
+            fields=["name", "item_code"],
+        )
+        for ip in existing:
+            if ip.item_code not in target_items:
+                frappe.delete_doc("Item Price", ip.name, force=True)
+
+    def _upsert_item_price(self, item_code, uom, rate):
+        existing = frappe.db.get_value(
+            "Item Price",
+            {
+                "item_code": item_code,
+                "price_list": self.price_list,
+                "uom": uom,
+            },
+            "name",
+        )
+
+        if existing:
+            ip = frappe.get_doc("Item Price", existing)
+            if ip.price_list_rate != rate:
+                ip.price_list_rate = rate
+                ip.save(ignore_permissions=True)
+        else:
+            ip = frappe.get_doc({
+                "doctype": "Item Price",
+                "item_code": item_code,
+                "uom": uom,
+                "price_list": self.price_list,
+                "price_list_rate": rate,
+                "currency": self.currency,
+            })
+            ip.insert(ignore_permissions=True)
 
     def _sync_pos_profiles(self):
         pass
 
     def _cleanup(self):
-        pass
+        if not self.price_list:
+            return
+
+        # Delete all Item Prices for this Price List
+        ips = frappe.get_all(
+            "Item Price",
+            filters={"price_list": self.price_list},
+            pluck="name",
+        )
+        for ip_name in ips:
+            frappe.delete_doc("Item Price", ip_name, force=True)
+
+        # Disable or delete Price List if exclusive to this group
+        other_groups = frappe.db.count(
+            "Price Group",
+            {"price_list": self.price_list, "name": ("!=", self.name)},
+        )
+        if other_groups == 0:
+            frappe.delete_doc("Price List", self.price_list, force=True)
