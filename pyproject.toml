@@ -63,3 +63,8 @@ typing-modules = ["frappe.types.DF"]
 quote-style = "double"
 indent-style = "tab"
 docstring-code-format = true
+
+# Specify compatible Frappe version(s) for Frappe Cloud / bench
+[tool.bench.frappe-dependencies]
+# Set the Frappe version your app supports. Adjust the range if needed.
+frappe = ">=16.0.0,<17.0.0"
