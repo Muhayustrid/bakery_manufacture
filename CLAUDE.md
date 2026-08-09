@@ -141,3 +141,5 @@ Manufacture qty ≠ planned; partial/multi-batch/by-product/scrap; barcode scan 
 - Chat: Indonesian. Repo Markdown/code/tests/commits: English
 - No commit/push/Cloud deploy/migrate production without explicit user approval
 - Do not delete a directory without explicit approval unless it is strictly required for an explicitly requested application objective; inspect it and state the concrete technical reason first
+- Use native `EnterWorktree` for non-trivial implementation, bug fixes, refactors, and multi-file changes; edit the active checkout only for trivial documentation or configuration changes
+- Do not remove a worktree without explicit user approval
