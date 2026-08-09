@@ -20,6 +20,8 @@ fixtures = [
     {"dt": "Custom Field", "filters": [["fieldname", "in", ["custom_default_uom_warehouse", "custom_walk_in_customer_name"]]]},
 ]
 
+after_migrate = ["bakery_manufacturing.after_migrate.after_migrate"]
+
 # required_apps = []
 
 # Each item in the list will be shown as an app in the apps page
