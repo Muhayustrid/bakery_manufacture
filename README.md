@@ -28,6 +28,12 @@ Pre-commit is configured to use the following tools for checking and formatting 
 - prettier
 - pyupgrade
 
+### Deprecated
+
+`bakery_manufacturing.overrides.barcode_scanner.custom_scan_barcode` is a compatibility shim
+for one release. Barcode scanning and the `Item-custom_default_uom_warehouse` custom field
+belong to `stock_additional`. Update legacy callers to import from `stock_additional`.
+
 ### License
 
 mit

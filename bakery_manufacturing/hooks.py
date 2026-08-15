@@ -8,16 +8,29 @@ app_license = "mit"
 # Apps
 # ------------------
 override_doctype_class = {
-    "Serial and Batch Bundle": "bakery_manufacturing.overrides.serial_batch_bundle.BakerySerialAndBatchBundle"
+	"Serial and Batch Bundle": "bakery_manufacturing.overrides.serial_batch_bundle.BakerySerialAndBatchBundle"
 }
 
 override_whitelisted_methods = {
-    "erpnext.stock.utils.scan_barcode": "bakery_manufacturing.overrides.barcode_scanner.custom_scan_barcode",
-    "erpnext.selling.page.point_of_sale.point_of_sale.get_past_order_list": "bakery_manufacturing.overrides.pos_overrides.custom_get_past_order_list",
+	"erpnext.selling.page.point_of_sale.point_of_sale.get_past_order_list": "bakery_manufacturing.overrides.pos_overrides.custom_get_past_order_list",
 }
 
+required_apps = ["erpnext"]
+
 fixtures = [
-    {"dt": "Custom Field", "filters": [["fieldname", "in", ["custom_default_uom_warehouse", "custom_walk_in_customer_name"]]]},
+	{
+		"dt": "Custom Field",
+		"filters": [
+			[
+				"name",
+				"in",
+				[
+					"POS Invoice-custom_walk_in_customer_name",
+					"Sales Invoice-custom_walk_in_customer_name",
+				],
+			]
+		],
+	},
 ]
 
 after_migrate = ["bakery_manufacturing.after_migrate.after_migrate"]
@@ -269,4 +282,3 @@ app_include_js = "bakery_manufacturing.bundle.js"
 # ------------
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
-
