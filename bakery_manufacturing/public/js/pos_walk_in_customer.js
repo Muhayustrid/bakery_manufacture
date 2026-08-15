@@ -72,7 +72,7 @@
 		var $wrap = $(
 			'<div class="walk-in-customer-field" style="margin-top:8px;padding:0 15px;">' +
 				'<div class="walk-in-input"></div>' +
-			"</div>"
+				"</div>"
 		);
 		cart.$customer_section.append($wrap);
 
@@ -104,14 +104,11 @@
 	}
 
 	function patch_past_order_list() {
-		if (!erpnext || !erpnext.PointOfSale || !erpnext.PointOfSale.PastOrderList)
-			return;
+		if (!erpnext || !erpnext.PointOfSale || !erpnext.PointOfSale.PastOrderList) return;
 		if (erpnext.PointOfSale.PastOrderList.prototype._walk_in_patched) return;
 
 		var orig = erpnext.PointOfSale.PastOrderList.prototype.get_invoice_html;
-		erpnext.PointOfSale.PastOrderList.prototype.get_invoice_html = function (
-			invoice
-		) {
+		erpnext.PointOfSale.PastOrderList.prototype.get_invoice_html = function (invoice) {
 			var html = orig.call(this, invoice);
 			if (invoice.custom_walk_in_customer_name) {
 				var safe_orig = frappe.utils.escape_html(
