@@ -4,7 +4,7 @@ This file provides guidance to the assistant (claude.ai/code) when working with 
 
 ## What this is
 
-ERPNext v16 custom app for bakery/F&B manufacturing on a Frappe Cloud private bench. Owns manufacturing-specific behavior, Price Group ↔ Price List/POS Profile sync, batch default-UOM barcode enrichment, Serial and Batch Bundle quantity sync, and the legacy Desk POS walk-in display-name customization.
+ERPNext v16 custom app for bakery/F&B manufacturing on a Frappe Cloud private bench. Owns manufacturing-specific behavior, Price Group ↔ Price List/POS Profile sync, Serial and Batch Bundle quantity sync, and the legacy Desk POS walk-in display-name customization.
 
 **Deep rules live in `AGENTS.md`** (ownership, Price Group semantics, manufacturing qty rules, deployment). Read it before non-trivial changes. This file is the short operational map.
 
@@ -32,7 +32,7 @@ Inside container, from `/workspace/development/frappe-bench`:
 ```bash
 # Tests (prefer --module in this v16 env; bare --test <name> historically found zero)
 bench --site development.localhost run-tests --app bakery_manufacturing
-bench --site development.localhost run-tests --module bakery_manufacturing.tests.test_barcode_scanner
+bench --site development.localhost run-tests --module bakery_manufacturing.tests.test_barcode_scanner_shim
 bench --site development.localhost run-tests --module bakery_manufacturing.bakery_manufacturing.doctype.price_group.test_price_group
 bench --site development.localhost run-tests --module bakery_manufacturing.bakery_manufacturing.tests.test_serial_batch_bundle
 
@@ -50,7 +50,6 @@ pre-commit run --all-files   # ruff, eslint, prettier, pyupgrade
 pre-commit install
 graphify update .
 graphify explain "PriceGroup"
-graphify path "custom_scan_barcode" "resolve_batch_uom"
 ```
 
 Note: `bench execute /tmp/file.py` has failed in this Docker setup; use reviewed `bench console` input when an approved diagnostic needs it.
@@ -64,19 +63,19 @@ bakery_manufacturing/
 ├── fixtures/custom_field.json
 ├── overrides/
 │   ├── serial_batch_bundle.py    # BakerySerialAndBatchBundle
-│   ├── barcode_scanner.py        # custom_scan_barcode + resolve_batch_uom
+│   ├── barcode_scanner.py        # legacy compatibility shim (no registered hook)
 │   └── pos_overrides.py          # custom_get_past_order_list (walk-in name)
 ├── public/js/
 │   ├── bakery_manufacturing.bundle.js
 │   └── pos_walk_in_customer.js
-├── tests/test_barcode_scanner.py
+├── tests/test_barcode_scanner_shim.py
 └── bakery_manufacturing/doctype/
     ├── price_group/              # syncs Price List + Item Price + POS Profiles
     ├── price_group_item/
     └── price_group_outlet/
 ```
 
-`bakery_manufacturing/bakery_manufacturing/tests/test_serial_batch_bundle.py` exists but is empty — manufacturing batch-qty behavior still lacks meaningful automated coverage.
+The former barcode scanner and serial/batch test paths were extracted or removed; manufacturing batch-qty behavior still lacks meaningful automated coverage.
 
 ## Active hooks (source of truth: `hooks.py`)
 
@@ -86,15 +85,24 @@ override_doctype_class = {
 }
 
 override_whitelisted_methods = {
-    "erpnext.stock.utils.scan_barcode":
-        "bakery_manufacturing.overrides.barcode_scanner.custom_scan_barcode",
     "erpnext.selling.page.point_of_sale.point_of_sale.get_past_order_list":
         "bakery_manufacturing.overrides.pos_overrides.custom_get_past_order_list",
 }
 
 fixtures = [
-    {"dt": "Custom Field", "filters": [["fieldname", "in",
-        ["custom_default_uom_warehouse", "custom_walk_in_customer_name"]]]},
+    {
+        "dt": "Custom Field",
+        "filters": [
+            [
+                "name",
+                "in",
+                [
+                    "POS Invoice-custom_walk_in_customer_name",
+                    "Sales Invoice-custom_walk_in_customer_name",
+                ],
+            ]
+        ],
+    },
 ]
 
 app_include_js = "bakery_manufacturing.bundle.js"
@@ -105,16 +113,15 @@ Resolve overrides with `frappe.override_whitelisted_method()` when code needs th
 
 ### Custom fields in fixture
 
-- `Item-custom_default_uom_warehouse` — Link/UOM, default sell/scan UOM when ≠ stock_uom
 - `POS Invoice-custom_walk_in_customer_name` / `Sales Invoice-custom_walk_in_customer_name`
 
-Fixture filter is fieldname-only — inspect every export diff; it can pull matching fields from any DocType.
+The `Item-custom_default_uom_warehouse` field is owned by `stock_additional`; it is no longer part of this app's fixture.
 
 ## Core behaviors (summary — details in AGENTS.md)
 
 **Price Group** (`PriceGroup`): validate items/outlets → on_update sync Price List, Item Prices, and linked POS Profile `selling_price_list` → on_trash cleanup. Outlets are company+warehouse pairs; warehouse must belong to company.
 
-**Barcode scan**: wrap core `scan_barcode`; if batch+item present, set `uom` / `conversion_factor` from Item `custom_default_uom_warehouse` via UOM Conversion Detail; warn if conversion missing.
+**Barcode scan**: no longer owned here. `stock_additional` owns the registered `scan_barcode` override and raises when a custom UOM conversion is missing or non-positive, failing closed instead of warning and continuing.
 
 **Serial and Batch Bundle**: subclass sets serial/batch values with manufacture qty synchronization rules (greater/less/equal planned, multi-batch, scrap/by-product — see AGENTS.md).
 
@@ -124,7 +131,7 @@ Fixture filter is fieldname-only — inspect every export diff; it can pull matc
 
 | App | Owns |
 |-----|------|
-| **bakery_manufacturing** (this) | Manufacturing, Price Group, batch UOM, Desk walk-in name fields |
+| **bakery_manufacturing** (this) | Manufacturing, Price Group, and Desk walk-in name fields |
 | **roti_ropi_pos** | Mobile POS API, OAuth, idempotency, DTOs |
 | **POSERPNext** | Android client |
 | **erpnext / frappe** | Core — do not edit in-tree |
