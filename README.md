@@ -34,6 +34,11 @@ Pre-commit is configured to use the following tools for checking and formatting 
 for one release. Barcode scanning and the `Item-custom_default_uom_warehouse` custom field
 belong to `stock_additional`. Update legacy callers to import from `stock_additional`.
 
+`bakery_manufacturing.overrides.pos_overrides.custom_get_past_order_list` is a compatibility
+shim for one release. Price Group (with its DocTypes, controller, and generated Price List
+management), the walk-in customer fields and Desk asset, and the POS past-order override
+belong to `selling_additional`. Update legacy callers to import from `selling_additional`.
+
 ### License
 
 mit

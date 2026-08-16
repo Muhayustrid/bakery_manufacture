@@ -32,7 +32,9 @@ class TestBarcodeScannerShim(unittest.TestCase):
 
 	def test_missing_stock_additional_raises_actionable_import_error(self):
 		"""Without the owning app installed, the shim must name it in the error."""
-		real_import = __builtins__["__import__"] if isinstance(__builtins__, dict) else __builtins__.__import__
+		real_import = (
+			__builtins__["__import__"] if isinstance(__builtins__, dict) else __builtins__.__import__
+		)
 
 		def blocked_import(name, *args, **kwargs):
 			if name.startswith("stock_additional"):
