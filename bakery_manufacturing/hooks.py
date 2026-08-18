@@ -8,19 +8,15 @@ app_license = "mit"
 # Apps
 # ------------------
 override_doctype_class = {
-    "Serial and Batch Bundle": "bakery_manufacturing.overrides.serial_batch_bundle.BakerySerialAndBatchBundle"
+	"Serial and Batch Bundle": "bakery_manufacturing.overrides.serial_batch_bundle.BakerySerialAndBatchBundle"
 }
 
-override_whitelisted_methods = {
-    "erpnext.stock.utils.scan_barcode": "bakery_manufacturing.overrides.barcode_scanner.custom_scan_barcode",
-    "erpnext.selling.page.point_of_sale.point_of_sale.get_past_order_list": "bakery_manufacturing.overrides.pos_overrides.custom_get_past_order_list",
-}
+# Selling extensions (Price Group, walk-in, past-order) moved to selling_additional.
+# The past-order override registration, the walk-in Custom Field fixtures, the
+# after_migrate sidebar hook, and the Desk bundle include were removed with that
+# handoff; overrides/pos_overrides.py keeps a lazy import shim for one release.
 
-fixtures = [
-    {"dt": "Custom Field", "filters": [["fieldname", "in", ["custom_default_uom_warehouse", "custom_walk_in_customer_name"]]]},
-]
-
-after_migrate = ["bakery_manufacturing.after_migrate.after_migrate"]
+required_apps = ["erpnext"]
 
 # required_apps = []
 
@@ -40,7 +36,7 @@ after_migrate = ["bakery_manufacturing.after_migrate.after_migrate"]
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/bakery_manufacturing/css/bakery_manufacturing.css"
-app_include_js = "bakery_manufacturing.bundle.js"
+# app_include_js = "bakery_manufacturing.bundle.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/bakery_manufacturing/css/bakery_manufacturing.css"
@@ -269,4 +265,3 @@ app_include_js = "bakery_manufacturing.bundle.js"
 # ------------
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
-

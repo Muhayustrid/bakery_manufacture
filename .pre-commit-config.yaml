@@ -42,8 +42,12 @@ repos:
                 .*node_modules.*|
                 .*boilerplate.*|
                 bakery_manufacturing/templates/includes/.*|
-                bakery_manufacturing/public/js/lib/.*
+                bakery_manufacturing/public/js/lib/.*|
+                bakery_manufacturing/public/js/bakery_manufacturing.bundle.js
             )$
+        # The bundle's uncommitted prototype suffix must stay byte-identical
+        # (SHA-256 8b04313861b211aa17cb4d0c87c372d32e2f8b0d642b94292e58a7865ae1bbf1);
+        # formatting hooks may not rewrite it.
 
 
   - repo: https://github.com/pre-commit/mirrors-eslint
@@ -60,7 +64,8 @@ repos:
                 .*node_modules.*|
                 .*boilerplate.*|
                 bakery_manufacturing/templates/includes/.*|
-                bakery_manufacturing/public/js/lib/.*
+                bakery_manufacturing/public/js/lib/.*|
+                bakery_manufacturing/public/js/bakery_manufacturing.bundle.js
             )$
 
 ci:
